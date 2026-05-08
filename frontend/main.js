@@ -30,6 +30,75 @@ function setActiveNav() {
     });
 }
 
+function initResponsiveNav() {
+    const mobileBreakpoint = 900;
+    document.querySelectorAll(".navbar").forEach((navbar, index) => {
+        if (!navbar || navbar.dataset.responsiveInit === "true") {
+            return;
+        }
+
+        const navInner = navbar.querySelector(".nav-inner");
+        const navLinks = navbar.querySelector(".nav-links");
+        const navActions = navbar.querySelector(".nav-actions");
+        if (!navInner || (!navLinks && !navActions)) {
+            return;
+        }
+
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "nav-toggle";
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-label", "Toggle navigation menu");
+
+        const controls = [];
+        if (navLinks) {
+            navLinks.id ||= `nav-links-${index + 1}`;
+            controls.push(navLinks.id);
+        }
+        if (navActions) {
+            navActions.id ||= `nav-actions-${index + 1}`;
+            controls.push(navActions.id);
+        }
+        if (controls.length) {
+            toggle.setAttribute("aria-controls", controls.join(" "));
+        }
+
+        toggle.innerHTML = `
+            <span class="nav-toggle-line" aria-hidden="true"></span>
+            <span class="nav-toggle-line" aria-hidden="true"></span>
+            <span class="nav-toggle-line" aria-hidden="true"></span>
+        `;
+        navInner.appendChild(toggle);
+
+        const closeMenu = () => {
+            navbar.classList.remove("menu-open");
+            toggle.setAttribute("aria-expanded", "false");
+        };
+
+        toggle.addEventListener("click", () => {
+            const nextState = !navbar.classList.contains("menu-open");
+            navbar.classList.toggle("menu-open", nextState);
+            toggle.setAttribute("aria-expanded", String(nextState));
+        });
+
+        navbar.querySelectorAll(".nav-link").forEach((link) => {
+            link.addEventListener("click", () => {
+                if (window.innerWidth <= mobileBreakpoint) {
+                    closeMenu();
+                }
+            });
+        });
+
+        window.addEventListener("resize", () => {
+            if (window.innerWidth > mobileBreakpoint) {
+                closeMenu();
+            }
+        });
+
+        navbar.dataset.responsiveInit = "true";
+    });
+}
+
 function checkLogin() {
     const user = getStoredUser();
     if (!user || !user.user_id) {
@@ -343,4 +412,5 @@ function materialCell(name, category, detail = "") {
     `;
 }
 
+initResponsiveNav();
 setActiveNav();
