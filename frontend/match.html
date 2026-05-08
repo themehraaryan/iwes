@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IWES Match</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="navbar">
+            <div class="nav-inner">
+                <a class="nav-brand" href="dashboard.html" aria-label="IWES Dashboard">
+                    <span class="brand-mark">IW</span>
+                    <span>
+                        <strong>IWES</strong>
+                        <span>Matching</span>
+                    </span>
+                </a>
+
+                <div class="nav-links" aria-label="Primary navigation">
+                    <a class="nav-link" href="dashboard.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a class="nav-link" href="listings.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="10.5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="16" width="12" height="3" rx="1.5"></rect>
+                        </svg>
+                        Listings
+                    </a>
+                    <a class="nav-link active" href="match.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 3a7 7 0 1 1 0 14a7 7 0 0 1 0-14Zm0 3.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7Z"></path>
+                        </svg>
+                        Match
+                    </a>
+                    <a class="nav-link" href="analytics.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4" y="11" width="3" height="9" rx="1"></rect>
+                            <rect x="10.5" y="7" width="3" height="13" rx="1"></rect>
+                            <rect x="17" y="4" width="3" height="16" rx="1"></rect>
+                        </svg>
+                        Analytics
+                    </a>
+                </div>
+
+                <div class="nav-actions">
+                    <span class="user-pill" id="userName">User</span>
+                    <button class="button button-ghost" type="button" id="logoutButton">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Find Matches</h1>
+                    <p>Select a material and quantity. MySQL ranks active SELL listings through the matching stored procedure.</p>
+                </div>
+            </header>
+
+            <div class="utility-bar">
+                <span class="meta-label">CALL match_listings()</span>
+            </div>
+
+            <section class="card form-card">
+                <form class="form-grid-compact" id="matchForm">
+                    <div class="form-group">
+                        <label for="productSelect">Product</label>
+                        <select id="productSelect" required>
+                            <option value="">Select product</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qtyNeeded">Quantity Needed</label>
+                        <input id="qtyNeeded" type="number" min="0.01" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="locationFilter">Location (optional)</label>
+                        <input id="locationFilter" type="text" placeholder="City or region">
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="button button-primary button-wide" type="submit" id="matchButton">Find Matches</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="card panel mt-18">
+                <div class="panel-header">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 3a7 7 0 1 1 0 14a7 7 0 0 1 0-14Zm0 3.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7Z"></path>
+                        </svg>
+                        Ranked Seller Matches
+                    </h2>
+                    <span class="status-chip" id="matchCount">0 matches</span>
+                </div>
+                <div class="listing-grid" id="matchesGrid">
+                    <div class="empty-block">Choose a product and quantity to run matching.</div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        const currentUser = checkLogin();
+        let requestedQty = 0;
+        let allProducts = [];
+        let allMatches = [];
+
+        if (currentUser) {
+            document.getElementById("userName").textContent = currentUser.name || currentUser.email;
+        }
+
+        bindRequiredForm(
+            document.getElementById("matchForm"),
+            document.getElementById("matchButton")
+        );
+
+        document.getElementById("logoutButton").addEventListener("click", async () => {
+            const button = document.getElementById("logoutButton");
+            setButtonLoading(button, true, "Logging out...");
+            try {
+                await apiCall("/auth/logout", "POST");
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                clearStoredUser();
+                window.location.href = "login.html";
+            }
+        });
+
+        document.getElementById("matchForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const button = document.getElementById("matchButton");
+            const productId = document.getElementById("productSelect").value;
+            requestedQty = Number(document.getElementById("qtyNeeded").value);
+
+            if (!productId) {
+                showToast("Select a product", "error");
+                return;
+            }
+            if (!requestedQty || requestedQty <= 0) {
+                showToast("Enter a valid quantity", "error");
+                return;
+            }
+
+            setButtonLoading(button, true, "Matching...");
+            document.getElementById("matchesGrid").innerHTML = `
+                <div class="skeleton skeleton-block"></div>
+                <div class="skeleton skeleton-block"></div>
+                <div class="skeleton skeleton-block"></div>
+            `;
+            try {
+                const data = await apiCall("/match", "POST", {
+                    product_id: productId,
+                    qty_needed: requestedQty,
+                });
+                allMatches = data.matches || [];
+                applyMatchFilters();
+            } catch (error) {
+                showToast(error.message, "error");
+                document.getElementById("matchesGrid").innerHTML = `<div class="empty-block">Could not load matches.</div>`;
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+
+        document.getElementById("locationFilter").addEventListener("input", applyMatchFilters);
+
+        async function initializePage() {
+            try {
+                const [meData, productData] = await Promise.all([
+                    apiCall("/auth/me"),
+                    apiCall("/products"),
+                ]);
+                setStoredUser(meData.user);
+                document.getElementById("userName").textContent = meData.user.name;
+                allProducts = productData.products || [];
+                renderProductOptions();
+            } catch (error) {
+                showToast(error.message, "error");
+            }
+        }
+
+        function renderProductOptions() {
+            const options = allProducts.map((product) => (
+                `<option value="${product.product_id}">${escapeHtml(product.name)} (${escapeHtml(product.category)}, ${escapeHtml(product.unit)})</option>`
+            )).join("");
+            document.getElementById("productSelect").innerHTML = `<option value="">Select product</option>${options}`;
+        }
+
+        function applyMatchFilters() {
+            const location = document.getElementById("locationFilter").value.trim().toLowerCase();
+            let filtered = [...allMatches];
+            if (location) {
+                filtered = filtered.filter((match) =>
+                    String(match.location || "").toLowerCase().includes(location)
+                );
+            }
+            renderMatches(filtered);
+        }
+
+        function renderMatches(matches) {
+            const grid = document.getElementById("matchesGrid");
+            document.getElementById("matchCount").textContent = `${matches.length} matches`;
+
+            if (!matches.length) {
+                grid.innerHTML = `<div class="empty-block">No ranked matches yet. Try a smaller quantity or expand the location filter.</div>`;
+                return;
+            }
+
+            grid.innerHTML = matches.map((match, index) => {
+                const isOwnListing = Number(match.seller_id) === Number(currentUser.user_id);
+                const availableQty = Number(match.available_qty || 0);
+                const isPartial = availableQty < requestedQty;
+                const availabilityLabel = isPartial ? "Partial fulfillment" : "Full quantity";
+                return `
+                    <article class="card listing-card">
+                        <div class="listing-meta">
+                            <span class="status-chip">Rank #${index + 1}</span>
+                            <span class="status-chip">${availabilityLabel}</span>
+                        </div>
+                        ${materialCell(match.product_name, match.category, match.unit)}
+                        <div class="listing-meta">
+                            <span>Seller: ${escapeHtml(match.seller_name)}</span>
+                            <span>Available: ${formatNumber(match.available_qty, 2)} ${escapeHtml(match.unit)}</span>
+                            <span>Price: ${formatPrice(match.price_per_unit)}</span>
+                            <span>Location: ${escapeHtml(match.location || "-")}</span>
+                            <span>Created: ${formatDate(match.created_at)}</span>
+                        </div>
+                        <div class="listing-actions">
+                            <button class="button button-secondary" type="button" data-listing-id="${match.listing_id}" ${isOwnListing ? "disabled" : ""}>
+                                ${isOwnListing ? "Own Listing" : "Transact"}
+                            </button>
+                        </div>
+                    </article>
+                `;
+            }).join("");
+
+            grid.querySelectorAll("button[data-listing-id]").forEach((button) => {
+                button.addEventListener("click", () => transactMatch(button));
+            });
+        }
+
+        async function transactMatch(button) {
+            setButtonLoading(button, true, "Saving...");
+            try {
+                const data = await apiCall("/transact", "POST", {
+                    listing_id: button.dataset.listingId,
+                    qty: requestedQty,
+                });
+                showToast("Transaction completed. Listing quantity was updated by MySQL.", "success");
+                document.getElementById("matchForm").dispatchEvent(new Event("submit"));
+                openRatingModal(data.transaction && data.transaction.txn_id);
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        initializePage();
+    </script>
+</body>
+</html>

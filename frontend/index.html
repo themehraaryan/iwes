@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IWES | Industrial Waste Exchange System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="landing-page">
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a class="nav-brand" href="index.html" aria-label="IWES Home">
+                <span class="brand-mark">IW</span>
+                <span>
+                    <strong>IWES</strong>
+                    <span>Industrial Waste Exchange</span>
+                </span>
+            </a>
+
+            <div class="nav-links" aria-label="Public navigation">
+                <a class="nav-link" href="#features">Features</a>
+                <a class="nav-link" href="#workflow">Workflow</a>
+                <a class="nav-link" href="#dbms">DBMS Core</a>
+            </div>
+
+            <div class="nav-actions">
+                <a class="button button-ghost" href="login.html">Log In</a>
+                <a class="button button-primary" href="register.html">Create Account</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="landing-main">
+        <section class="hero-section">
+            <div class="page-container hero-grid">
+                <div>
+                    <span class="hero-kicker">Industrial byproduct reuse platform</span>
+                    <h1 class="hero-title">Industrial Waste Exchange System</h1>
+                    <p class="hero-lede">
+                        A database-driven platform for structured waste exchange, demand-supply matching,
+                        and analytical reporting across industrial partners.
+                    </p>
+                    <div class="hero-actions">
+                        <a class="button button-primary" href="login.html">Log In</a>
+                        <a class="button button-secondary" href="register.html">Create Account</a>
+                    </div>
+                    <div class="hero-meta">
+                        <span class="status-chip">DBMS-first architecture</span>
+                        <span class="status-chip">MySQL triggers and procedures</span>
+                    </div>
+                </div>
+                <article class="card hero-card">
+                    <span class="eyebrow">Platform synopsis</span>
+                    <h2>Database-driven coordination</h2>
+                    <ul class="hero-list">
+                        <li>Listings track available quantities with trigger-based updates.</li>
+                        <li>Stored procedures rank matches for reliable procurement.</li>
+                        <li>Views summarize active listings, analytics, and recent activity.</li>
+                        <li>Partial fulfillment keeps transactions realistic and verifiable.</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+
+        <section class="section-block" id="features">
+            <div class="page-container">
+                <div class="section-head">
+                    <span class="eyebrow">Features</span>
+                    <h2>Structured exchange capabilities</h2>
+                    <p>Every workflow step exposes the DBMS logic while keeping the interface clean and academic.</p>
+                </div>
+                <div class="feature-grid">
+                    <article class="card feature-card">
+                        <h3>Dual-role users</h3>
+                        <p>Organizations participate as both buyers and sellers using one verified profile.</p>
+                    </article>
+                    <article class="card feature-card">
+                        <h3>Buy and sell listings</h3>
+                        <p>Structured listings capture quantity, unit price, location, and category data.</p>
+                    </article>
+                    <article class="card feature-card">
+                        <h3>Smart matching</h3>
+                        <p>MySQL procedures rank SELL listings by availability and fit.</p>
+                    </article>
+                    <article class="card feature-card">
+                        <h3>Partial fulfillment</h3>
+                        <p>Transactions support partial quantities with trigger-validated inventory updates.</p>
+                    </article>
+                    <article class="card feature-card">
+                        <h3>Analytics and reporting</h3>
+                        <p>Views summarize top waste types, user activity, and recent transactions.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-block" id="workflow">
+            <div class="page-container">
+                <div class="section-head">
+                    <span class="eyebrow">Workflow</span>
+                    <h2>Register, list, match, transact, analyze</h2>
+                    <p>A guided timeline that mirrors how the database procedures coordinate exchange activity.</p>
+                </div>
+                <div class="workflow-grid">
+                    <article class="card workflow-step">
+                        <span class="step-index">01</span>
+                        <strong>Register</strong>
+                        <p>Create a verified company profile for secure access.</p>
+                    </article>
+                    <article class="card workflow-step">
+                        <span class="step-index">02</span>
+                        <strong>Create Listing</strong>
+                        <p>Publish BUY or SELL listings with quantity and location data.</p>
+                    </article>
+                    <article class="card workflow-step">
+                        <span class="step-index">03</span>
+                        <strong>Match</strong>
+                        <p>Run the matching procedure for ranked seller options.</p>
+                    </article>
+                    <article class="card workflow-step">
+                        <span class="step-index">04</span>
+                        <strong>Transact</strong>
+                        <p>Execute partial or full exchanges with trigger validation.</p>
+                    </article>
+                    <article class="card workflow-step">
+                        <span class="step-index">05</span>
+                        <strong>Analyze</strong>
+                        <p>Use summary views to report and explain outcomes.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section-block" id="dbms">
+            <div class="page-container">
+                <div class="section-head">
+                    <span class="eyebrow">DBMS Highlight</span>
+                    <h2>MySQL schema, procedures, and views</h2>
+                    <p>The platform keeps database concepts visible for the viva and synopsis narrative.</p>
+                </div>
+                <div class="dbms-grid">
+                    <article class="card dbms-card">
+                        <h3>Normalized tables</h3>
+                        <p>Users, products, listings, transactions, ratings, and waste mapping form the core schema.</p>
+                    </article>
+                    <article class="card dbms-card">
+                        <h3>Trigger integrity</h3>
+                        <p>Stock levels update automatically and prevent negative quantities.</p>
+                    </article>
+                    <article class="card dbms-card">
+                        <h3>Stored procedures</h3>
+                        <p>Procedures handle matching, transaction creation, and user summaries.</p>
+                    </article>
+                    <article class="card dbms-card">
+                        <h3>Analytical views</h3>
+                        <p>Views surface top waste categories and recent transaction activity.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="page-container footer-grid">
+            <div>
+                <strong>IWES</strong> | Industrial Waste Exchange System
+            </div>
+            <div>
+                Academic DBMS demo platform for structured industrial byproduct reuse.
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+</body>
+</html>

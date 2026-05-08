@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IWES Listings</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="navbar">
+            <div class="nav-inner">
+                <a class="nav-brand" href="dashboard.html" aria-label="IWES Dashboard">
+                    <span class="brand-mark">IW</span>
+                    <span>
+                        <strong>IWES</strong>
+                        <span>Listings</span>
+                    </span>
+                </a>
+
+                <div class="nav-links" aria-label="Primary navigation">
+                    <a class="nav-link" href="dashboard.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                        </svg>
+                        Dashboard
+                    </a>
+                    <a class="nav-link active" href="listings.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="10.5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="16" width="12" height="3" rx="1.5"></rect>
+                        </svg>
+                        Listings
+                    </a>
+                    <a class="nav-link" href="match.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm0 3a7 7 0 1 1 0 14a7 7 0 0 1 0-14Zm0 3.5a3.5 3.5 0 1 0 0 7a3.5 3.5 0 0 0 0-7Z"></path>
+                        </svg>
+                        Match
+                    </a>
+                    <a class="nav-link" href="analytics.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="4" y="11" width="3" height="9" rx="1"></rect>
+                            <rect x="10.5" y="7" width="3" height="13" rx="1"></rect>
+                            <rect x="17" y="4" width="3" height="16" rx="1"></rect>
+                        </svg>
+                        Analytics
+                    </a>
+                </div>
+
+                <div class="nav-actions">
+                    <span class="user-pill" id="userName">User</span>
+                    <button class="button button-ghost" type="button" id="logoutButton">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="page-title">
+                    <h1>Listings</h1>
+                    <p>Search active listings and publish structured BUY or SELL requests.</p>
+                </div>
+                <div class="page-actions">
+                    <button class="button button-primary" type="button" id="openCreateModal">Create Listing</button>
+                </div>
+            </header>
+
+            <section class="card filter-card filter-bar" aria-label="Listing filters">
+                <form class="form-grid" id="filterForm">
+                    <div class="form-group">
+                        <label for="categoryFilter">Category</label>
+                        <select id="categoryFilter" name="category">
+                            <option value="">All categories</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="typeFilter">Listing Type</label>
+                        <select id="typeFilter" name="type">
+                            <option value="">BUY and SELL</option>
+                            <option value="SELL">SELL</option>
+                            <option value="BUY">BUY</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="statusFilter">Status</label>
+                        <select id="statusFilter" name="status">
+                            <option value="">All statuses</option>
+                            <option value="ACTIVE">ACTIVE</option>
+                            <option value="COMPLETED">COMPLETED</option>
+                            <option value="EXPIRED">EXPIRED</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="minQtyFilter">Minimum Quantity</label>
+                        <input id="minQtyFilter" name="min_qty" type="number" min="0" step="0.01" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="searchFilter">Search Product</label>
+                        <input id="searchFilter" name="search" type="text" placeholder="Product name">
+                    </div>
+                    <div class="form-group">
+                        <label for="sortFilter">Sort By</label>
+                        <select id="sortFilter" name="sort">
+                            <option value="newest">Newest first</option>
+                            <option value="price-asc">Price: low to high</option>
+                            <option value="price-desc">Price: high to low</option>
+                            <option value="qty-desc">Quantity: high to low</option>
+                            <option value="qty-asc">Quantity: low to high</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>View</label>
+                        <div class="view-toggle" role="tablist" aria-label="Listing view">
+                            <button class="button button-ghost view-button" type="button" data-view="table" aria-pressed="true">Table</button>
+                            <button class="button button-ghost view-button" type="button" data-view="cards" aria-pressed="false">Cards</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="button button-secondary button-wide" type="submit" id="filterButton">Apply Filters</button>
+                    </div>
+                    <div class="form-group">
+                        <label>&nbsp;</label>
+                        <button class="button button-ghost button-wide" type="button" id="clearFilters">Clear</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="card panel mt-18">
+                <div class="panel-header">
+                    <h2 class="section-title">
+                        <svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="10.5" width="18" height="3" rx="1.5"></rect>
+                            <rect x="3" y="16" width="12" height="3" rx="1.5"></rect>
+                        </svg>
+                        Listings
+                    </h2>
+                    <span class="status-chip" id="listingCount">0 records</span>
+                </div>
+                <div class="listings-view" id="listingsView" data-view="table">
+                    <div class="table-wrap">
+                        <table class="responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Owner</th>
+                                    <th>Type</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listingsBody">
+                                <tr>
+                                    <td colspan="9" class="loading-state">
+                                        <div class="skeleton skeleton-line"></div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="listing-grid" id="listingGrid"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal-backdrop" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createModalTitle">
+        <section class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="createModalTitle">Create Listing</h2>
+                    <p>Quantity tracking is handled by MySQL triggers after transactions.</p>
+                </div>
+                <button class="icon-button" type="button" id="closeCreateModal" aria-label="Close create listing modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="createListingForm">
+                    <div class="form-group">
+                        <label for="productSelect">Product</label>
+                        <select id="productSelect" required>
+                            <option value="">Select product</option>
+                        </select>
+                    </div>
+
+                    <div class="form-grid form-grid-two">
+                        <div class="form-group">
+                            <label for="listingType">Listing Type</label>
+                            <select id="listingType" required>
+                                <option value="SELL">SELL</option>
+                                <option value="BUY">BUY</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="totalQty">Total Quantity</label>
+                            <input id="totalQty" type="number" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-grid form-grid-two">
+                        <div class="form-group">
+                            <label for="pricePerUnit">Price Per Unit</label>
+                            <input id="pricePerUnit" type="number" min="0" step="0.01" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Location</label>
+                            <input id="location" type="text" maxlength="150" placeholder="Noida, Ghaziabad">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="button button-ghost" type="button" id="cancelCreate">Cancel</button>
+                        <button class="button button-primary" type="submit" id="createButton">Save Listing</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </div>
+
+    <div class="modal-backdrop" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <section class="modal">
+            <div class="modal-header">
+                <div>
+                    <h2 id="deleteModalTitle">Delete Listing</h2>
+                    <p>Confirm removal of this listing from the exchange.</p>
+                </div>
+                <button class="icon-button" type="button" id="closeDeleteModal" aria-label="Close delete modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="deleteModalText" class="modal-note">This action cannot be undone.</p>
+                <div class="form-actions">
+                    <button class="button button-ghost" type="button" id="cancelDelete">Cancel</button>
+                    <button class="button button-secondary" type="button" id="confirmDelete">Delete Listing</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="main.js"></script>
+    <script>
+        const currentUser = checkLogin();
+        let allProducts = [];
+        let allListings = [];
+        let currentView = "table";
+        let pendingDeleteListing = null;
+
+        if (currentUser) {
+            document.getElementById("userName").textContent = currentUser.name || currentUser.email;
+        }
+
+        bindRequiredForm(
+            document.getElementById("createListingForm"),
+            document.getElementById("createButton")
+        );
+
+        document.getElementById("logoutButton").addEventListener("click", async () => {
+            const button = document.getElementById("logoutButton");
+            setButtonLoading(button, true, "Logging out...");
+            try {
+                await apiCall("/auth/logout", "POST");
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                clearStoredUser();
+                window.location.href = "login.html";
+            }
+        });
+
+        document.getElementById("filterForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const button = document.getElementById("filterButton");
+            setButtonLoading(button, true, "Filtering...");
+            try {
+                await loadListings();
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+
+        document.getElementById("clearFilters").addEventListener("click", async () => {
+            document.getElementById("filterForm").reset();
+            document.getElementById("searchFilter").value = "";
+            await loadListings();
+        });
+
+        document.getElementById("statusFilter").addEventListener("change", applyFilters);
+        document.getElementById("sortFilter").addEventListener("change", applyFilters);
+        document.getElementById("searchFilter").addEventListener("input", applyFilters);
+
+        document.querySelectorAll(".view-button").forEach((button) => {
+            button.addEventListener("click", () => setViewMode(button.dataset.view));
+        });
+
+        setViewMode(currentView);
+
+        document.getElementById("openCreateModal").addEventListener("click", openCreateModal);
+        document.getElementById("closeCreateModal").addEventListener("click", closeCreateModal);
+        document.getElementById("cancelCreate").addEventListener("click", closeCreateModal);
+        document.getElementById("createModal").addEventListener("click", (event) => {
+            if (event.target.id === "createModal") {
+                closeCreateModal();
+            }
+        });
+
+        document.getElementById("closeDeleteModal").addEventListener("click", closeDeleteModal);
+        document.getElementById("cancelDelete").addEventListener("click", closeDeleteModal);
+        document.getElementById("deleteModal").addEventListener("click", (event) => {
+            if (event.target.id === "deleteModal") {
+                closeDeleteModal();
+            }
+        });
+
+        document.getElementById("confirmDelete").addEventListener("click", async () => {
+            if (!pendingDeleteListing) {
+                return;
+            }
+            const button = document.getElementById("confirmDelete");
+            setButtonLoading(button, true, "Deleting...");
+            try {
+                await apiCall(`/listings/${pendingDeleteListing.listing_id}`, "DELETE");
+                showToast("Listing deleted", "success");
+                closeDeleteModal();
+                await loadListings();
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+
+        document.getElementById("createListingForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const button = document.getElementById("createButton");
+            const payload = {
+                product_id: document.getElementById("productSelect").value,
+                listing_type: document.getElementById("listingType").value,
+                total_qty: document.getElementById("totalQty").value,
+                price_per_unit: document.getElementById("pricePerUnit").value,
+                location: document.getElementById("location").value.trim(),
+            };
+
+            if (!payload.product_id || !payload.listing_type || !payload.total_qty) {
+                showToast("Product, listing type, and quantity are required", "error");
+                return;
+            }
+
+            setButtonLoading(button, true, "Saving...");
+            try {
+                await apiCall("/listings/create", "POST", payload);
+                showToast("Listing created", "success");
+                document.getElementById("createListingForm").reset();
+                closeCreateModal();
+                await loadListings();
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+
+        async function initializePage() {
+            try {
+                const [meData, productData] = await Promise.all([
+                    apiCall("/auth/me"),
+                    apiCall("/products"),
+                ]);
+                setStoredUser(meData.user);
+                document.getElementById("userName").textContent = meData.user.name;
+                allProducts = productData.products || [];
+                renderProductOptions();
+                renderCategoryOptions();
+                await loadListings();
+            } catch (error) {
+                showToast(error.message, "error");
+                setListingsError();
+            }
+        }
+
+        async function loadListings() {
+            const params = new URLSearchParams();
+            const category = document.getElementById("categoryFilter").value;
+            const type = document.getElementById("typeFilter").value;
+            const minQty = document.getElementById("minQtyFilter").value;
+
+            if (category) {
+                params.set("category", category);
+            }
+            if (type) {
+                params.set("type", type);
+            }
+            if (minQty) {
+                params.set("min_qty", minQty);
+            }
+
+            const suffix = params.toString() ? `?${params.toString()}` : "";
+            const data = await apiCall(`/listings${suffix}`);
+            allListings = data.listings || [];
+            applyFilters();
+        }
+
+        function renderProductOptions() {
+            const options = allProducts.map((product) => (
+                `<option value="${product.product_id}">${escapeHtml(product.name)} (${escapeHtml(product.unit)})</option>`
+            )).join("");
+            document.getElementById("productSelect").innerHTML = `<option value="">Select product</option>${options}`;
+        }
+
+        function renderCategoryOptions() {
+            const categories = [...new Set(allProducts.map((product) => product.category))].sort();
+            const options = categories.map((category) => (
+                `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
+            )).join("");
+            document.getElementById("categoryFilter").innerHTML = `<option value="">All categories</option>${options}`;
+        }
+
+        function applyFilters() {
+            const status = document.getElementById("statusFilter").value;
+            const search = document.getElementById("searchFilter").value.trim().toLowerCase();
+            const sort = document.getElementById("sortFilter").value;
+
+            let filtered = [...allListings];
+
+            if (status) {
+                filtered = filtered.filter((listing) => String(listing.status || "").toUpperCase() === status);
+            }
+
+            if (search) {
+                filtered = filtered.filter((listing) =>
+                    String(listing.product_name || "").toLowerCase().includes(search)
+                );
+            }
+
+            filtered.sort((a, b) => {
+                if (sort === "price-asc") {
+                    const aPrice = Number.isFinite(Number(a.price_per_unit)) ? Number(a.price_per_unit) : Number.POSITIVE_INFINITY;
+                    const bPrice = Number.isFinite(Number(b.price_per_unit)) ? Number(b.price_per_unit) : Number.POSITIVE_INFINITY;
+                    return aPrice - bPrice;
+                }
+                if (sort === "price-desc") {
+                    const aPrice = Number.isFinite(Number(a.price_per_unit)) ? Number(a.price_per_unit) : Number.NEGATIVE_INFINITY;
+                    const bPrice = Number.isFinite(Number(b.price_per_unit)) ? Number(b.price_per_unit) : Number.NEGATIVE_INFINITY;
+                    return bPrice - aPrice;
+                }
+                if (sort === "qty-desc") {
+                    return Number(b.available_qty || 0) - Number(a.available_qty || 0);
+                }
+                if (sort === "qty-asc") {
+                    return Number(a.available_qty || 0) - Number(b.available_qty || 0);
+                }
+                const aDate = new Date(a.created_at || 0).getTime();
+                const bDate = new Date(b.created_at || 0).getTime();
+                return bDate - aDate;
+            });
+
+            renderListings(filtered);
+        }
+
+        function renderListings(listings) {
+            const body = document.getElementById("listingsBody");
+            const grid = document.getElementById("listingGrid");
+            document.getElementById("listingCount").textContent = `${listings.length} records`;
+
+            if (!listings.length) {
+                body.innerHTML = `<tr><td colspan="9" class="empty-state">No listings match the current filters.</td></tr>`;
+                grid.innerHTML = `<div class="empty-block">No listings match the current filters.</div>`;
+                return;
+            }
+
+            body.innerHTML = listings.map((listing) => {
+                const isOwnListing = Number(listing.user_id) === Number(currentUser.user_id);
+                const inputId = `qty-${listing.listing_id}`;
+                const actionCell = isOwnListing
+                    ? `<div class="listing-actions"><button class="button button-ghost" type="button" data-delete-id="${listing.listing_id}">Delete</button></div>`
+                    : `
+                        <div class="qty-action">
+                            <input id="${inputId}" type="number" min="0.01" max="${Number(listing.available_qty)}" step="0.01" placeholder="Qty">
+                            <button class="button button-secondary" type="button" data-listing-id="${listing.listing_id}" data-input-id="${inputId}">Transact</button>
+                        </div>
+                    `;
+
+                return `
+                    <tr>
+                        <td data-label="Product">${materialCell(listing.product_name, listing.category, listing.possible_uses || listing.unit)}</td>
+                        <td data-label="Owner">${escapeHtml(listing.user_name)}<br><span>${escapeHtml(listing.user_phone || "-")}</span></td>
+                        <td data-label="Type">${statusBadge(listing.listing_type)}</td>
+                        <td data-label="Quantity">${formatNumber(listing.available_qty, 2)} / ${formatNumber(listing.total_qty, 2)} ${escapeHtml(listing.unit)}</td>
+                        <td data-label="Price">${formatPrice(listing.price_per_unit)}</td>
+                        <td data-label="Location">${escapeHtml(listing.location || "-")}</td>
+                        <td data-label="Status">${statusBadge(listing.status)}</td>
+                        <td data-label="Created">${formatDate(listing.created_at)}</td>
+                        <td data-label="Action">${actionCell}</td>
+                    </tr>
+                `;
+            }).join("");
+
+            grid.innerHTML = listings.map((listing) => {
+                const isOwnListing = Number(listing.user_id) === Number(currentUser.user_id);
+                const inputId = `card-qty-${listing.listing_id}`;
+                const actionBlock = isOwnListing
+                    ? `<button class="button button-ghost" type="button" data-delete-id="${listing.listing_id}">Delete listing</button>`
+                    : `
+                        <div class="qty-action">
+                            <input id="${inputId}" type="number" min="0.01" max="${Number(listing.available_qty)}" step="0.01" placeholder="Qty">
+                            <button class="button button-secondary" type="button" data-listing-id="${listing.listing_id}" data-input-id="${inputId}">Transact</button>
+                        </div>
+                    `;
+
+                return `
+                    <article class="card listing-card">
+                        ${materialCell(listing.product_name, listing.category, listing.unit)}
+                        <div class="listing-meta">
+                            <span>${statusBadge(listing.listing_type)} ${statusBadge(listing.status)}</span>
+                            <span>Owner: ${escapeHtml(listing.user_name)} (${escapeHtml(listing.user_phone || "-")})</span>
+                            <span>Available: ${formatNumber(listing.available_qty, 2)} ${escapeHtml(listing.unit)}</span>
+                            <span>Price: ${formatPrice(listing.price_per_unit)}</span>
+                            <span>Location: ${escapeHtml(listing.location || "-")}</span>
+                            <span>Created: ${formatDate(listing.created_at)}</span>
+                        </div>
+                        <div class="listing-actions">
+                            ${actionBlock}
+                        </div>
+                    </article>
+                `;
+            }).join("");
+
+            document.querySelectorAll("button[data-listing-id]").forEach((button) => {
+                button.addEventListener("click", () => transactFromButton(button));
+            });
+
+            document.querySelectorAll("button[data-delete-id]").forEach((button) => {
+                button.addEventListener("click", () => openDeleteModal(button.dataset.deleteId));
+            });
+        }
+
+        async function transactFromButton(button) {
+            const input = document.getElementById(button.dataset.inputId);
+            const qty = Number(input.value);
+            if (!qty || qty <= 0) {
+                showToast("Enter a valid transaction quantity", "error");
+                return;
+            }
+            if (Number(input.max) && qty > Number(input.max)) {
+                showToast("Quantity cannot exceed available stock", "error");
+                return;
+            }
+
+            setButtonLoading(button, true, "Saving...");
+            try {
+                const data = await apiCall("/transact", "POST", {
+                    listing_id: button.dataset.listingId,
+                    qty,
+                });
+                showToast("Transaction completed. MySQL triggers updated the listing quantity.", "success");
+                await loadListings();
+                openRatingModal(data.transaction && data.transaction.txn_id);
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+
+        function setViewMode(view) {
+            currentView = view === "cards" ? "cards" : "table";
+            const container = document.getElementById("listingsView");
+            container.dataset.view = currentView;
+            document.querySelectorAll(".view-button").forEach((button) => {
+                const isActive = button.dataset.view === currentView;
+                button.classList.toggle("active", isActive);
+                button.setAttribute("aria-pressed", isActive ? "true" : "false");
+            });
+        }
+
+        function openDeleteModal(listingId) {
+            pendingDeleteListing = allListings.find((listing) => String(listing.listing_id) === String(listingId));
+            if (!pendingDeleteListing) {
+                return;
+            }
+            const qtyText = formatNumber(pendingDeleteListing.total_qty, 2);
+            document.getElementById("deleteModalText").textContent = `Delete ${pendingDeleteListing.product_name} listing for ${qtyText} ${pendingDeleteListing.unit}?`;
+            document.getElementById("deleteModal").classList.add("open");
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteListing = null;
+            document.getElementById("deleteModal").classList.remove("open");
+        }
+
+        function openCreateModal() {
+            document.getElementById("createModal").classList.add("open");
+            document.getElementById("productSelect").focus();
+        }
+
+        function closeCreateModal() {
+            document.getElementById("createModal").classList.remove("open");
+        }
+
+        function setListingsError() {
+            document.getElementById("listingsBody").innerHTML = `<tr><td colspan="9" class="empty-state">Could not load listings.</td></tr>`;
+            document.getElementById("listingGrid").innerHTML = `<div class="empty-block">Could not load listings.</div>`;
+        }
+
+        initializePage();
+    </script>
+</body>
+</html>

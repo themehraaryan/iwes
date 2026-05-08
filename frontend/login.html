@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IWES Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page has-auth-nav">
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a class="nav-brand" href="index.html" aria-label="IWES Home">
+                <span class="brand-mark">IW</span>
+                <span>
+                    <strong>IWES</strong>
+                    <span>Industrial Waste Exchange</span>
+                </span>
+            </a>
+
+            <div class="nav-actions">
+                <a class="button button-ghost" href="index.html">Back to landing</a>
+                <a class="button button-primary" href="register.html">Create account</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="auth-shell">
+        <section class="brand-block" aria-label="IWES">
+            <div class="brand-mark">IW</div>
+            <h1>Welcome back</h1>
+            <p>Continue to your IWES workspace.</p>
+        </section>
+
+        <section class="card auth-card">
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email" autocomplete="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input id="password" name="password" type="password" autocomplete="current-password" required>
+                </div>
+
+                <button class="button button-primary button-wide" type="submit" id="loginButton">Log In</button>
+            </form>
+
+            <p class="auth-switch">New to IWES? <a href="register.html">Create an account</a></p>
+        </section>
+    </main>
+
+    <script src="main.js"></script>
+    <script>
+        const existingUser = getStoredUser();
+        if (existingUser && existingUser.user_id) {
+            window.location.href = "dashboard.html";
+        }
+
+        bindRequiredForm(
+            document.getElementById("loginForm"),
+            document.getElementById("loginButton")
+        );
+
+        document.getElementById("loginForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+
+            const button = document.getElementById("loginButton");
+            const payload = {
+                email: document.getElementById("email").value.trim(),
+                password: document.getElementById("password").value,
+            };
+
+            if (!payload.email || !payload.password) {
+                showToast("Email and password are required", "error");
+                return;
+            }
+
+            setButtonLoading(button, true, "Logging in...");
+            try {
+                const data = await apiCall("/auth/login", "POST", payload);
+                setStoredUser(data.user);
+                showToast("Login successful", "success");
+                setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 450);
+            } catch (error) {
+                showToast(error.message, "error");
+            } finally {
+                setButtonLoading(button, false);
+            }
+        });
+    </script>
+</body>
+</html>
