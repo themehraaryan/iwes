@@ -20,10 +20,18 @@ function clearStoredUser() {
 }
 
 function setActiveNav() {
-    const currentPage = window.location.pathname.split("/").pop() || "index.html";
+    const path = window.location.pathname.replace(/\/+$/, "");
+    const rawPage = path.split("/").pop() || "index";
+    const normalizedPage = rawPage.includes(".") ? rawPage : `${rawPage}.html`;
     document.querySelectorAll(".nav-link").forEach((link) => {
+        link.classList.remove("active");
+        link.removeAttribute("aria-current");
         const href = link.getAttribute("href");
-        if (href === currentPage) {
+        if (!href) {
+            return;
+        }
+        const normalizedHref = href.includes(".") ? href : `${href}.html`;
+        if (normalizedHref === normalizedPage) {
             link.classList.add("active");
             link.setAttribute("aria-current", "page");
         }
@@ -109,7 +117,8 @@ function checkLogin() {
     return user;
 }
 
-async function apiCall(url, method = "GET", body = null) {
+async function apiCall(url, method = "GET", body = null, config = {}) {
+    const { silent = false } = config;
     const targetUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
     const options = {
         method,
@@ -123,31 +132,68 @@ async function apiCall(url, method = "GET", body = null) {
         options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(targetUrl, options);
-    let data = {};
+    let response;
+    try {
+        response = await fetch(targetUrl, options);
+    } catch (networkError) {
+        const error = new Error("Unable to reach the server. Check backend connection.");
+        error.isNotified = !silent;
+        if (!silent) {
+            showToast(error.message, "error");
+        }
+        throw error;
+    }
 
+    let data = {};
     try {
         data = await response.json();
-    } catch (error) {
+    } catch (parseError) {
         data = {};
     }
 
     if (!response.ok) {
         const message = data.error || data.message || "Request failed";
+        const error = new Error(message);
+
         if (response.status === 401 && !window.location.pathname.endsWith("login.html")) {
             clearStoredUser();
-            showToast("Please log in again", "error");
+            if (!silent) {
+                showToast("Please log in again", "error");
+            }
             setTimeout(() => {
                 window.location.href = "login.html";
             }, 650);
+            error.isNotified = true;
+            throw error;
         }
-        throw new Error(message);
+
+        if (!silent) {
+            showToast(message, "error");
+            error.isNotified = true;
+        }
+
+        throw error;
     }
 
     return data;
 }
 
+const toastHistory = new Map();
+
 function showToast(message, type = "info") {
+    const text = String(message || "").trim();
+    if (!text) {
+        return;
+    }
+
+    const now = Date.now();
+    const duplicateKey = `${type}:${text}`;
+    const lastShown = toastHistory.get(duplicateKey) || 0;
+    if (now - lastShown < 900) {
+        return;
+    }
+    toastHistory.set(duplicateKey, now);
+
     let container = document.querySelector(".toast-container");
     if (!container) {
         container = document.createElement("div");
@@ -157,7 +203,7 @@ function showToast(message, type = "info") {
 
     const toast = document.createElement("div");
     toast.className = `toast toast-${type}`;
-    toast.textContent = message;
+    toast.textContent = text;
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -168,6 +214,9 @@ function showToast(message, type = "info") {
 
     setTimeout(() => {
         toast.remove();
+        if (!container.childElementCount) {
+            container.remove();
+        }
     }, 3450);
 }
 
@@ -412,5 +461,65 @@ function materialCell(name, category, detail = "") {
     `;
 }
 
+let notificationPollTimer = null;
+let notificationVisibilityHooked = false;
+
+function ensureNotificationBadge() {
+    const navActions = document.querySelector(".app-shell .navbar .nav-actions");
+    if (!navActions) {
+        return null;
+    }
+
+    let holder = navActions.querySelector(".sidebar-notif");
+    if (!holder) {
+        holder = document.createElement("div");
+        holder.className = "sidebar-notif";
+        holder.innerHTML = 'Alerts <span class="notif-badge is-zero" id="sidebarNotifBadge">0</span>';
+        navActions.prepend(holder);
+    }
+
+    return holder.querySelector("#sidebarNotifBadge");
+}
+
+async function refreshNotificationCount() {
+    const badge = ensureNotificationBadge();
+    if (!badge) {
+        return;
+    }
+
+    try {
+        const data = await apiCall("/notifications", "GET", null, { silent: true });
+        const count = Array.isArray(data.notifications) ? data.notifications.length : 0;
+        badge.textContent = String(count);
+        badge.classList.toggle("is-zero", count === 0);
+    } catch (error) {
+        // Silent polling avoids repeated error toasts during temporary network issues.
+    }
+}
+
+function startNotificationPolling() {
+    if (!document.querySelector(".app-shell .navbar")) {
+        return;
+    }
+
+    if (notificationPollTimer) {
+        window.clearInterval(notificationPollTimer);
+    }
+
+    refreshNotificationCount();
+    notificationPollTimer = window.setInterval(refreshNotificationCount, 30000);
+
+    if (!notificationVisibilityHooked) {
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                refreshNotificationCount();
+            }
+        });
+        notificationVisibilityHooked = true;
+    }
+}
+
 initResponsiveNav();
 setActiveNav();
+startNotificationPolling();
+window.showToast = showToast;

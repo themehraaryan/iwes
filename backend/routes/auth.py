@@ -9,6 +9,11 @@ from utils import login_required, serialize_row
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+def _users_has_column(cursor, column_name):
+    cursor.execute("SHOW COLUMNS FROM Users LIKE %s", (column_name,))
+    return cursor.fetchone() is not None
+
+
 @auth_bp.post("/register")
 def register():
     data = request.get_json(silent=True) or {}
@@ -16,6 +21,8 @@ def register():
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
     phone = (data.get("phone") or "").strip() or None
+    company_name = (data.get("company_name") or "").strip() or None
+    city = (data.get("city") or "").strip() or None
 
     if not name or not email or not password:
         return jsonify({"error": "Name, email, and password are required"}), 400
@@ -30,13 +37,33 @@ def register():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            """
-            INSERT INTO Users (name, email, password_hash, phone)
-            VALUES (%s, %s, %s, %s)
-            """,
-            (name, email, password_hash, phone),
-        )
+        has_company_name = _users_has_column(cursor, "company_name")
+        has_city = _users_has_column(cursor, "city")
+
+        if has_company_name and has_city:
+            cursor.execute(
+                """
+                INSERT INTO Users (name, email, password_hash, phone, company_name, city)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                (name, email, password_hash, phone, company_name, city),
+            )
+        elif has_city:
+            cursor.execute(
+                """
+                INSERT INTO Users (name, email, password_hash, phone, city)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (name, email, password_hash, phone, city),
+            )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO Users (name, email, password_hash, phone)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (name, email, password_hash, phone),
+            )
         connection.commit()
         user_id = cursor.lastrowid
 
@@ -48,6 +75,8 @@ def register():
                     "name": name,
                     "email": email,
                     "phone": phone,
+                    "company_name": company_name,
+                    "city": city,
                 },
             }
         ), 201
@@ -80,9 +109,16 @@ def login():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+        has_company_name = _users_has_column(cursor, "company_name")
+        has_city = _users_has_column(cursor, "city")
+        select_columns = ["user_id", "name", "email", "password_hash", "phone", "created_at"]
+        if has_company_name:
+            select_columns.append("company_name")
+        if has_city:
+            select_columns.append("city")
         cursor.execute(
-            """
-            SELECT user_id, name, email, password_hash, phone, created_at
+            f"""
+            SELECT {", ".join(select_columns)}
             FROM Users
             WHERE email = %s
             """,
@@ -99,8 +135,11 @@ def login():
         session["user_id"] = user["user_id"]
         session["name"] = user["name"]
         session["email"] = user["email"]
+        session["city"] = user.get("city") if has_city else None
 
         user.pop("password_hash", None)
+        user.setdefault("company_name", None)
+        user.setdefault("city", None)
         return jsonify({"message": "Login successful", "user": serialize_row(user)}), 200
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
@@ -128,9 +167,16 @@ def me():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
+        has_company_name = _users_has_column(cursor, "company_name")
+        has_city = _users_has_column(cursor, "city")
+        select_columns = ["user_id", "name", "email", "phone", "created_at"]
+        if has_company_name:
+            select_columns.append("company_name")
+        if has_city:
+            select_columns.append("city")
         cursor.execute(
-            """
-            SELECT user_id, name, email, phone, created_at
+            f"""
+            SELECT {", ".join(select_columns)}
             FROM Users
             WHERE user_id = %s
             """,
@@ -142,6 +188,8 @@ def me():
             session.clear()
             return jsonify({"error": "User not found"}), 404
 
+        user.setdefault("company_name", None)
+        user.setdefault("city", None)
         return jsonify({"user": serialize_row(user)}), 200
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500

@@ -17,20 +17,21 @@ ON DUPLICATE KEY UPDATE
     unit = VALUES(unit),
     possible_uses = VALUES(possible_uses);
 
-INSERT INTO Users (user_id, name, email, password_hash, phone) VALUES
-(1, 'Aarav Metals', 'aarav.metals@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543210'),
-(2, 'Noida Cement Works', 'cement.works@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543211'),
-(3, 'Green Bio Energy', 'green.bio@example.com', '$2b$12$Gh3w7OIcsKjsusV2HgIyK.t7mUYqSaDXQDVmIh/kfn59HSWQPou.u', '9876543212'),
-(4, 'NCR Plastics Recycler', 'ncr.plastics@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543213'),
-(5, 'EcoBrick Solutions', 'ecobrick@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543214'),
-(6, 'Urban Timber Works', 'urban.timber@example.com', '$2b$12$Gh3w7OIcsKjsusV2HgIyK.t7mUYqSaDXQDVmIh/kfn59HSWQPou.u', '9876543215'),
-(7, 'Shakti Paper Mills', 'shakti.paper@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543216'),
-(8, 'Metro Glass Recyclers', 'metro.glass@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543217')
+INSERT INTO Users (user_id, name, email, password_hash, phone, city) VALUES
+(1, 'Aarav Metals', 'aarav.metals@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543210', 'Noida'),
+(2, 'Noida Cement Works', 'cement.works@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543211', 'Greater Noida'),
+(3, 'Green Bio Energy', 'green.bio@example.com', '$2b$12$Gh3w7OIcsKjsusV2HgIyK.t7mUYqSaDXQDVmIh/kfn59HSWQPou.u', '9876543212', 'Ghaziabad'),
+(4, 'NCR Plastics Recycler', 'ncr.plastics@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543213', 'Noida'),
+(5, 'EcoBrick Solutions', 'ecobrick@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543214', 'Dadri'),
+(6, 'Urban Timber Works', 'urban.timber@example.com', '$2b$12$Gh3w7OIcsKjsusV2HgIyK.t7mUYqSaDXQDVmIh/kfn59HSWQPou.u', '9876543215', 'Hapur'),
+(7, 'Shakti Paper Mills', 'shakti.paper@example.com', '$2b$12$YE4Ge3ZYzgY/A0qYZLSanO.8Ha8tgu5B9DwQ1I.Xcd7LgmHEbT61W', '9876543216', 'Sahibabad'),
+(8, 'Metro Glass Recyclers', 'metro.glass@example.com', '$2b$12$Gxd4iToQ.Y0pWoxbxRT73ukvIVkqfiYHDYm6XgEOXDkeQvjEaOAdS', '9876543217', 'Greater Noida')
 ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     email = VALUES(email),
     password_hash = VALUES(password_hash),
-    phone = VALUES(phone);
+    phone = VALUES(phone),
+    city = VALUES(city);
 
 INSERT INTO Listings (
     listing_id,
@@ -41,26 +42,27 @@ INSERT INTO Listings (
     available_qty,
     price_per_unit,
     location,
+    city,
     status
 ) VALUES
-(1, 1, 4, 'SELL', 500.00, 500.00, 42.00, 'Noida Sector 63', 'ACTIVE'),
-(2, 2, 1, 'BUY', 1000.00, 1000.00, 800.00, 'Greater Noida', 'ACTIVE'),
-(3, 3, 3, 'SELL', 750.00, 750.00, 6.50, 'Ghaziabad Industrial Area', 'ACTIVE'),
-(4, 1, 5, 'SELL', 300.00, 300.00, 18.00, 'Dadri', 'ACTIVE'),
-(5, 2, 8, 'SELL', 1200.00, 1200.00, 650.00, 'Noida Sector 80', 'ACTIVE'),
-(6, 5, 1, 'SELL', 1800.00, 1800.00, 760.00, 'Sikandrabad', 'ACTIVE'),
-(7, 7, 10, 'SELL', 900.00, 900.00, 11.50, 'Sahibabad Site 4', 'ACTIVE'),
-(8, 4, 5, 'BUY', 650.00, 650.00, 20.00, 'Noida Sector 65', 'ACTIVE'),
-(9, 7, 9, 'SELL', 420.00, 420.00, 9.00, 'Meerut Road Industrial Area', 'ACTIVE'),
-(10, 8, 6, 'SELL', 700.00, 700.00, 4.75, 'Greater Noida West', 'ACTIVE'),
-(11, 5, 2, 'BUY', 1100.00, 1100.00, 5.25, 'Bulandshahr Road', 'ACTIVE'),
-(12, 6, 2, 'SELL', 1400.00, 1400.00, 4.80, 'Hapur Road', 'ACTIVE'),
-(13, 6, 4, 'BUY', 900.00, 900.00, 40.00, 'Loni Industrial Area', 'ACTIVE'),
-(14, 7, 10, 'SELL', 1600.00, 1600.00, 10.75, 'Modinagar', 'ACTIVE'),
-(15, 8, 6, 'BUY', 500.00, 500.00, 5.10, 'Surajpur', 'ACTIVE'),
-(16, 5, 1, 'BUY', 2500.00, 2500.00, 790.00, 'Dadri Eco Park', 'ACTIVE'),
-(17, 4, 7, 'SELL', 330.00, 330.00, 13.50, 'Noida Sector 10', 'ACTIVE'),
-(18, 3, 3, 'SELL', 200.00, 200.00, 5.90, 'Ghaziabad Industrial Area', 'EXPIRED')
+(1, 1, 4, 'SELL', 500.00, 500.00, 42.00, 'Noida Sector 63', 'Noida', 'ACTIVE'),
+(2, 2, 1, 'BUY', 1000.00, 1000.00, 800.00, 'Greater Noida', 'Greater Noida', 'ACTIVE'),
+(3, 3, 3, 'SELL', 750.00, 750.00, 6.50, 'Ghaziabad Industrial Area', 'Ghaziabad', 'ACTIVE'),
+(4, 1, 5, 'SELL', 300.00, 300.00, 18.00, 'Dadri', 'Dadri', 'ACTIVE'),
+(5, 2, 8, 'SELL', 1200.00, 1200.00, 650.00, 'Noida Sector 80', 'Noida', 'ACTIVE'),
+(6, 5, 1, 'SELL', 1800.00, 1800.00, 760.00, 'Sikandrabad', 'Sikandrabad', 'ACTIVE'),
+(7, 7, 10, 'SELL', 900.00, 900.00, 11.50, 'Sahibabad Site 4', 'Sahibabad', 'ACTIVE'),
+(8, 4, 5, 'BUY', 650.00, 650.00, 20.00, 'Noida Sector 65', 'Noida', 'ACTIVE'),
+(9, 7, 9, 'SELL', 420.00, 420.00, 9.00, 'Meerut Road Industrial Area', 'Meerut', 'ACTIVE'),
+(10, 8, 6, 'SELL', 700.00, 700.00, 4.75, 'Greater Noida West', 'Greater Noida', 'ACTIVE'),
+(11, 5, 2, 'BUY', 1100.00, 1100.00, 5.25, 'Bulandshahr Road', 'Bulandshahr', 'ACTIVE'),
+(12, 6, 2, 'SELL', 1400.00, 1400.00, 4.80, 'Hapur Road', 'Hapur', 'ACTIVE'),
+(13, 6, 4, 'BUY', 900.00, 900.00, 40.00, 'Loni Industrial Area', 'Loni', 'ACTIVE'),
+(14, 7, 10, 'SELL', 1600.00, 1600.00, 10.75, 'Modinagar', 'Modinagar', 'ACTIVE'),
+(15, 8, 6, 'BUY', 500.00, 500.00, 5.10, 'Surajpur', 'Surajpur', 'ACTIVE'),
+(16, 5, 1, 'BUY', 2500.00, 2500.00, 790.00, 'Dadri Eco Park', 'Dadri', 'ACTIVE'),
+(17, 4, 7, 'SELL', 330.00, 330.00, 13.50, 'Noida Sector 10', 'Noida', 'ACTIVE'),
+(18, 3, 3, 'SELL', 200.00, 200.00, 5.90, 'Ghaziabad Industrial Area', 'Ghaziabad', 'EXPIRED')
 ON DUPLICATE KEY UPDATE
     user_id = VALUES(user_id),
     product_id = VALUES(product_id),
@@ -69,6 +71,7 @@ ON DUPLICATE KEY UPDATE
     available_qty = VALUES(available_qty),
     price_per_unit = VALUES(price_per_unit),
     location = VALUES(location),
+    city = VALUES(city),
     status = VALUES(status);
 
 INSERT INTO Transactions (
@@ -79,18 +82,18 @@ INSERT INTO Transactions (
     qty_exchanged,
     status
 ) VALUES
-(1, 1, 2, 1, 120.00, 'DONE'),
-(2, 2, 2, 1, 200.00, 'DONE'),
-(3, 3, 5, 3, 150.00, 'DONE'),
-(4, 4, 4, 1, 80.00, 'DONE'),
-(5, 5, 5, 2, 250.00, 'DONE'),
-(6, 6, 2, 5, 300.00, 'DONE'),
-(7, 7, 4, 7, 240.00, 'DONE'),
-(8, 8, 4, 1, 100.00, 'DONE'),
-(9, 10, 5, 8, 160.00, 'DONE'),
-(10, 11, 5, 6, 300.00, 'DONE'),
-(11, 12, 3, 6, 200.00, 'DONE'),
-(12, 17, 6, 4, 330.00, 'DONE')
+(1, 1, 2, 1, 120.00, 'COMPLETED'),
+(2, 2, 2, 1, 200.00, 'COMPLETED'),
+(3, 3, 5, 3, 150.00, 'COMPLETED'),
+(4, 4, 4, 1, 80.00, 'COMPLETED'),
+(5, 5, 5, 2, 250.00, 'COMPLETED'),
+(6, 6, 2, 5, 300.00, 'COMPLETED'),
+(7, 7, 4, 7, 240.00, 'COMPLETED'),
+(8, 8, 4, 1, 100.00, 'COMPLETED'),
+(9, 10, 5, 8, 160.00, 'COMPLETED'),
+(10, 11, 5, 6, 300.00, 'COMPLETED'),
+(11, 12, 3, 6, 200.00, 'COMPLETED'),
+(12, 17, 6, 4, 330.00, 'COMPLETED')
 ON DUPLICATE KEY UPDATE
     listing_id = VALUES(listing_id),
     buyer_id = VALUES(buyer_id),

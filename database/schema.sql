@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS Users (
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(15),
+    city VARCHAR(80) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS Listings (
     available_qty DECIMAL(10,2) NOT NULL,
     price_per_unit DECIMAL(10,2),
     location VARCHAR(150),
+    city VARCHAR(80) DEFAULT NULL,
     status ENUM('ACTIVE','COMPLETED','EXPIRED') DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_listing_total_qty CHECK (total_qty > 0),
@@ -51,7 +53,7 @@ CREATE TABLE IF NOT EXISTS Transactions (
     seller_id INT NOT NULL,
     qty_exchanged DECIMAL(10,2) NOT NULL,
     txn_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status ENUM('PENDING','DONE','CANCELLED') DEFAULT 'DONE',
+    status ENUM('REQUESTED','ACCEPTED','IN_TRANSIT','DELIVERED','COMPLETED','CANCELLED') DEFAULT 'REQUESTED',
     CONSTRAINT chk_txn_qty CHECK (qty_exchanged > 0),
     CONSTRAINT fk_transactions_listing
         FOREIGN KEY (listing_id) REFERENCES Listings(listing_id)
@@ -67,6 +69,21 @@ CREATE TABLE IF NOT EXISTS Transactions (
         ON UPDATE CASCADE,
     INDEX idx_txn_listing (listing_id),
     INDEX idx_txn_buyer (buyer_id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS Notifications (
+    notif_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('MATCH_FOUND','TXN_REQUESTED','TXN_UPDATED','LISTING_EXPIRED','RATING_RECEIVED') NOT NULL,
+    message VARCHAR(300) NOT NULL,
+    related_id INT DEFAULT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notif_user
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    INDEX idx_notif_user_unread (user_id, is_read)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS WasteMapping (

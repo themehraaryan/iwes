@@ -10,7 +10,7 @@
     <div class="app-shell">
         <nav class="navbar">
             <div class="nav-inner">
-                <a class="nav-brand" href="dashboard.html" aria-label="IWES Dashboard">
+                <a class="nav-brand" href="dashboard.html" aria-label="IWES Analytics">
                     <span class="brand-mark">IW</span>
                     <span>
                         <strong>IWES</strong>
@@ -19,15 +19,6 @@
                 </a>
 
                 <div class="nav-links" aria-label="Primary navigation">
-                    <a class="nav-link" href="dashboard.html">
-                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
-                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
-                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
-                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
-                        </svg>
-                        Dashboard
-                    </a>
                     <a class="nav-link" href="listings.html">
                         <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                             <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
@@ -50,6 +41,15 @@
                         </svg>
                         Analytics
                     </a>
+                    <a class="nav-link" href="dashboard.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                        </svg>
+                        Overview
+                    </a>
                 </div>
 
                 <div class="nav-actions">
@@ -62,35 +62,31 @@
         <main class="main-content">
             <header class="page-header">
                 <div class="page-title">
-                    <h1>Analytics</h1>
-                    <p>Database views and procedures translated into analytical summaries.</p>
+                    <h1>Platform Intelligence</h1>
+                    <p>MySQL-driven insights for exchange health, waste flow, and high-demand categories.</p>
                 </div>
             </header>
 
-            <div class="utility-bar">
-                <span class="meta-label">Views + Procedure</span>
-            </div>
-
-            <section class="stats-grid" aria-label="User analytics summary">
+            <section class="stats-grid" aria-label="Platform analytics summary">
                 <article class="card stat-card">
-                    <p class="stat-label">Active Listings</p>
-                    <p class="stat-value" id="activeListings">0</p>
+                    <p class="stat-label">Completed Txns</p>
+                    <p class="stat-value" id="completedTransactions">0</p>
                 </article>
                 <article class="card stat-card">
-                    <p class="stat-label">Total Transactions</p>
-                    <p class="stat-value" id="totalTransactions">0</p>
-                </article>
-                <article class="card stat-card">
-                    <p class="stat-label">Buying Transactions</p>
-                    <p class="stat-value" id="buyerTransactions">0</p>
-                </article>
-                <article class="card stat-card">
-                    <p class="stat-label">Selling Transactions</p>
-                    <p class="stat-value" id="sellerTransactions">0</p>
+                    <p class="stat-label">Waste Diverted</p>
+                    <p class="stat-value" id="totalWasteDiverted">0</p>
                 </article>
                 <article class="card stat-card">
                     <p class="stat-label">Average Rating</p>
-                    <p class="stat-value" id="averageRating">0.00</p>
+                    <p class="stat-value" id="avgPlatformRating">0.00</p>
+                </article>
+                <article class="card stat-card">
+                    <p class="stat-label">Total Listings</p>
+                    <p class="stat-value" id="totalListings">0</p>
+                </article>
+                <article class="card stat-card">
+                    <p class="stat-label">Active Txns</p>
+                    <p class="stat-value" id="activeTransactions">0</p>
                 </article>
             </section>
 
@@ -116,18 +112,14 @@
                     <div class="panel-header">
                         <h2 class="section-title">
                             <svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 12a4.25 4.25 0 1 0 0-8.5a4.25 4.25 0 0 0 0 8.5Zm0 2.5c-4.42 0-8 2.22-8 4.95V21h16v-1.55c0-2.73-3.58-4.95-8-4.95Z"></path>
+                                <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm1 5v5.2l3.8 2.2l-1 1.7L11 13V7h2Z"></path>
                             </svg>
-                            Personal Summary
+                            Platform Insights
                         </h2>
-                        <span class="meta-label">get_user_summary()</span>
+                        <span class="meta-label">SQL Aggregates</span>
                     </div>
-                    <div class="table-wrap">
-                        <table class="compact-table">
-                            <tbody id="summaryBody">
-                                <tr><td class="loading-state">Loading summary...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="listing-grid" id="insightsGrid">
+                        <div class="loading-state">Loading insights...</div>
                     </div>
                 </article>
             </section>
@@ -153,11 +145,10 @@
                                 <th>Seller</th>
                                 <th>Status</th>
                                 <th>Date</th>
-                                <th>Rate</th>
                             </tr>
                         </thead>
                         <tbody id="recentBody">
-                            <tr><td colspan="8" class="loading-state">Loading transactions...</td></tr>
+                            <tr><td colspan="7" class="loading-state">Loading transactions...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -188,42 +179,63 @@
 
         async function loadAnalytics() {
             try {
-                const [meData, summaryData, topWasteData, recentData] = await Promise.all([
+                const [meData, topWasteData, recentData, insightData] = await Promise.all([
                     apiCall("/auth/me"),
-                    apiCall("/analytics/summary"),
                     apiCall("/analytics/top-waste"),
                     apiCall("/analytics/recent"),
+                    apiCall("/analytics/insights"),
                 ]);
                 setStoredUser(meData.user);
                 document.getElementById("userName").textContent = meData.user.name;
-                renderSummary(summaryData.summary);
                 renderTopWaste(topWasteData.top_waste || []);
                 renderRecent(recentData.transactions || []);
+                renderInsights(insightData.insights || {});
             } catch (error) {
                 showToast(error.message, "error");
                 document.getElementById("topWasteChart").innerHTML = `<div class="empty-state">Could not load top waste data.</div>`;
-                document.getElementById("summaryBody").innerHTML = `<tr><td class="empty-state">Could not load summary.</td></tr>`;
-                document.getElementById("recentBody").innerHTML = `<tr><td colspan="8" class="empty-state">Could not load recent transactions.</td></tr>`;
+                document.getElementById("insightsGrid").innerHTML = `<div class="empty-state">Could not load insights.</div>`;
+                document.getElementById("recentBody").innerHTML = `<tr><td colspan="7" class="empty-state">Could not load recent transactions.</td></tr>`;
             }
         }
 
-        function renderSummary(summary) {
-            const rating = Number(summary.average_rating_received || 0);
-            const buyerCount = Number(summary.transactions_as_buyer || 0);
-            const sellerCount = Number(summary.transactions_as_seller || 0);
-            document.getElementById("activeListings").textContent = formatNumber(summary.active_listings);
-            document.getElementById("totalTransactions").textContent = formatNumber(buyerCount + sellerCount);
-            document.getElementById("buyerTransactions").textContent = formatNumber(buyerCount);
-            document.getElementById("sellerTransactions").textContent = formatNumber(sellerCount);
-            document.getElementById("averageRating").textContent = rating.toFixed(2);
-            document.getElementById("summaryBody").innerHTML = `
-                <tr><th>Total Listings</th><td>${formatNumber(summary.total_listings)}</td></tr>
-                <tr><th>Active Listings</th><td>${formatNumber(summary.active_listings)}</td></tr>
-                <tr><th>Transactions as Buyer</th><td>${formatNumber(summary.transactions_as_buyer)}</td></tr>
-                <tr><th>Transactions as Seller</th><td>${formatNumber(summary.transactions_as_seller)}</td></tr>
-                <tr><th>Total Transactions</th><td>${formatNumber(buyerCount + sellerCount)}</td></tr>
-                <tr><th>Average Rating Received</th><td>${rating.toFixed(2)}</td></tr>
-            `;
+        function renderInsights(insights) {
+            const completedTransactions = Number(insights.completed_transactions || 0);
+            const totalWasteDiverted = Number(insights.total_waste_diverted || 0);
+            const avgRating = Number(insights.avg_platform_rating || 0);
+            const totalListings = Number(insights.total_listings || 0);
+            const activeTransactions = Number(insights.active_transactions || 0);
+
+            document.getElementById("completedTransactions").textContent = formatNumber(completedTransactions);
+            document.getElementById("totalWasteDiverted").textContent = formatNumber(totalWasteDiverted, 2);
+            document.getElementById("avgPlatformRating").textContent = avgRating.toFixed(2);
+            document.getElementById("totalListings").textContent = formatNumber(totalListings);
+            document.getElementById("activeTransactions").textContent = formatNumber(activeTransactions);
+
+            const cards = [
+                {
+                    title: "Most Traded Waste",
+                    value: insights.most_traded_waste || "No data yet",
+                },
+                {
+                    title: "Completed Transactions",
+                    value: formatNumber(completedTransactions),
+                },
+                {
+                    title: "Total Waste Diverted",
+                    value: `${formatNumber(totalWasteDiverted, 2)} units`,
+                },
+                {
+                    title: "Avg Platform Rating",
+                    value: avgRating.toFixed(2),
+                },
+            ];
+
+            document.getElementById("insightsGrid").innerHTML = cards.map((card) => `
+                <article class="card listing-card">
+                    <p class="stat-label">${escapeHtml(card.title)}</p>
+                    <p class="stat-value">${escapeHtml(card.value)}</p>
+                </article>
+            `).join("");
         }
 
         function renderTopWaste(rows) {
@@ -253,7 +265,7 @@
             const body = document.getElementById("recentBody");
 
             if (!transactions.length) {
-                body.innerHTML = `<tr><td colspan="8" class="empty-state">No recent transactions in the last 30 days.</td></tr>`;
+                body.innerHTML = `<tr><td colspan="7" class="empty-state">No recent transactions in the last 30 days.</td></tr>`;
                 return;
             }
 
@@ -266,13 +278,8 @@
                     <td data-label="Seller">${escapeHtml(txn.seller_name)}</td>
                     <td data-label="Status">${statusBadge(txn.status)}</td>
                     <td data-label="Date">${formatDate(txn.txn_date)}</td>
-                    <td data-label="Rate"><button class="button button-secondary" type="button" data-rate-txn="${txn.txn_id}">Rate</button></td>
                 </tr>
             `).join("");
-
-            body.querySelectorAll("button[data-rate-txn]").forEach((button) => {
-                button.addEventListener("click", () => openRatingModal(button.dataset.rateTxn));
-            });
         }
 
         loadAnalytics();

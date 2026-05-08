@@ -3,31 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IWES Dashboard</title>
+    <title>IWES Overview</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-shell">
         <nav class="navbar">
             <div class="nav-inner">
-                <a class="nav-brand" href="dashboard.html" aria-label="IWES Dashboard">
+                <a class="nav-brand" href="dashboard.html" aria-label="IWES Overview">
                     <span class="brand-mark">IW</span>
                     <span>
                         <strong>IWES</strong>
-                        <span>Dashboard</span>
+                        <span>Overview</span>
                     </span>
                 </a>
 
                 <div class="nav-links" aria-label="Primary navigation">
-                    <a class="nav-link active" href="dashboard.html">
-                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
-                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
-                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
-                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
-                        </svg>
-                        Dashboard
-                    </a>
                     <a class="nav-link" href="listings.html">
                         <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
                             <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
@@ -50,6 +41,15 @@
                         </svg>
                         Analytics
                     </a>
+                    <a class="nav-link active" href="dashboard.html">
+                        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+                        </svg>
+                        Overview
+                    </a>
                 </div>
 
                 <div class="nav-actions">
@@ -62,39 +62,35 @@
         <main class="main-content">
             <header class="page-header">
                 <div class="page-title">
-                    <h1>Workspace</h1>
-                    <p id="welcomeText">A concise overview of your exchange activity.</p>
+                    <h1>Overview Dashboard</h1>
+                    <p id="welcomeText">Track platform activity and your current exchange footprint.</p>
                 </div>
                 <div class="page-actions">
-                    <a class="button button-primary" href="listings.html">Create Listing</a>
-                    <a class="button button-secondary" href="match.html">Find Matches</a>
+                    <a class="button button-primary" href="listings.html">New Listing</a>
+                    <a class="button button-secondary" href="match.html">Run Match</a>
                 </div>
             </header>
 
-            <div class="utility-bar">
-                <span class="meta-label">MySQL procedures + views</span>
-            </div>
-
-            <section class="stats-grid" aria-label="User summary">
+            <section class="stats-grid" aria-label="Overview stats">
                 <article class="card stat-card">
-                    <p class="stat-label">Active Listings</p>
-                    <p class="stat-value" id="activeListings">0</p>
+                    <p class="stat-label">Total Listings</p>
+                    <p class="stat-value" id="totalListings">0</p>
                 </article>
                 <article class="card stat-card">
-                    <p class="stat-label">Completed Listings</p>
-                    <p class="stat-value" id="completedListings">0</p>
+                    <p class="stat-label">Active Txns</p>
+                    <p class="stat-value" id="activeTransactions">0</p>
                 </article>
                 <article class="card stat-card">
-                    <p class="stat-label">Buyer Transactions</p>
-                    <p class="stat-value" id="buyerTransactions">0</p>
+                    <p class="stat-label">Completed Txns</p>
+                    <p class="stat-value" id="completedTransactions">0</p>
                 </article>
                 <article class="card stat-card">
-                    <p class="stat-label">Seller Transactions</p>
-                    <p class="stat-value" id="sellerTransactions">0</p>
+                    <p class="stat-label">Total Waste Diverted</p>
+                    <p class="stat-value" id="totalWasteDiverted">0</p>
                 </article>
                 <article class="card stat-card">
-                    <p class="stat-label">Average Rating</p>
-                    <p class="stat-value" id="averageRating">0.00</p>
+                    <p class="stat-label">My Active Listings</p>
+                    <p class="stat-value" id="myActiveListings">0</p>
                 </article>
             </section>
 
@@ -105,31 +101,12 @@
                             <svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20Zm1 5v5.2l3.8 2.2l-1 1.7L11 13V7h2Z"></path>
                             </svg>
-                            Recent Transactions
+                            Activity Feed
                         </h2>
-                        <span class="meta-label">Latest 5</span>
+                        <span class="meta-label">vw_activity_feed</span>
                     </div>
-                    <div class="table-wrap">
-                        <table class="responsive-table">
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Buyer</th>
-                                    <th>Seller</th>
-                                    <th>Status</th>
-                                    <th>Date</th>
-                                    <th>Rate</th>
-                                </tr>
-                            </thead>
-                            <tbody id="transactionsBody">
-                                <tr>
-                                    <td colspan="7" class="loading-state">
-                                        <div class="skeleton skeleton-line"></div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="panel-body" id="activityFeed">
+                        <div class="loading-state">Loading activity...</div>
                     </div>
                 </article>
 
@@ -143,51 +120,16 @@
                             </svg>
                             Quick Actions
                         </h2>
-                        <span class="meta-label">Workspace shortcuts</span>
+                        <span class="meta-label">Navigation</span>
                     </div>
                     <div class="panel-body">
-                        <p class="panel-note">Operational flow</p>
                         <div class="listing-actions">
-                            <a class="button button-primary" href="listings.html">Create Listing</a>
-                            <a class="button button-secondary" href="match.html">Run Matching</a>
+                            <a class="button button-primary" href="listings.html">Manage Listings</a>
+                            <a class="button button-secondary" href="match.html">Find Matches</a>
                             <a class="button button-ghost" href="analytics.html">View Analytics</a>
                         </div>
                     </div>
                 </article>
-            </section>
-
-            <section class="card panel mt-18">
-                <div class="panel-header">
-                    <h2 class="section-title">
-                        <svg class="section-icon" viewBox="0 0 24 24" aria-hidden="true">
-                            <rect x="3" y="5" width="18" height="3" rx="1.5"></rect>
-                            <rect x="3" y="10.5" width="18" height="3" rx="1.5"></rect>
-                            <rect x="3" y="16" width="12" height="3" rx="1.5"></rect>
-                        </svg>
-                        Listing Snapshot
-                    </h2>
-                    <span class="status-chip" id="listingCount">0 records</span>
-                </div>
-                <div class="table-wrap">
-                    <table class="responsive-table">
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Type</th>
-                                <th>Available</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                            </tr>
-                        </thead>
-                        <tbody id="listingsBody">
-                            <tr>
-                                <td colspan="5" class="loading-state">
-                                    <div class="skeleton skeleton-line"></div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </section>
         </main>
     </div>
@@ -198,7 +140,6 @@
 
         if (currentUser) {
             document.getElementById("userName").textContent = currentUser.name || currentUser.email;
-            document.getElementById("welcomeText").textContent = `Welcome back, ${currentUser.name || "user"}.`;
         }
 
         document.getElementById("logoutButton").addEventListener("click", async () => {
@@ -214,96 +155,80 @@
             }
         });
 
-        async function loadDashboard() {
+        async function loadOverview() {
             try {
-                const [meData, summaryData, listingsData, transactionsData] = await Promise.all([
+                const [meData, summaryData, insightData, feedData] = await Promise.all([
                     apiCall("/auth/me"),
                     apiCall("/analytics/summary"),
-                    apiCall("/listings/my"),
-                    apiCall("/transactions/history"),
+                    apiCall("/analytics/insights"),
+                    apiCall("/analytics/activity-feed"),
                 ]);
 
                 setStoredUser(meData.user);
                 document.getElementById("userName").textContent = meData.user.name;
                 document.getElementById("welcomeText").textContent = `Welcome back, ${meData.user.name}.`;
-
-                const listings = listingsData.listings || [];
-                renderSummary(summaryData.summary, listings);
-                renderListings(listings);
-                renderTransactions((transactionsData.transactions || []).slice(0, 5));
+                renderStats(summaryData.summary || {}, insightData.insights || {});
+                renderActivityFeed(feedData.activity_feed || []);
             } catch (error) {
                 showToast(error.message, "error");
-                setTableError("listingsBody", 5);
-                setTableError("transactionsBody", 7);
+                document.getElementById("activityFeed").innerHTML = `<div class="empty-state">Could not load activity feed.</div>`;
             }
         }
 
-        function renderSummary(summary, listings) {
-            const buyerCount = Number(summary.transactions_as_buyer || 0);
-            const sellerCount = Number(summary.transactions_as_seller || 0);
-            const rating = Number(summary.average_rating_received || 0);
-            const activeCount = listings.filter((listing) => listing.status === "ACTIVE").length;
-            const completedCount = listings.filter((listing) => listing.status === "COMPLETED").length;
-
-            document.getElementById("activeListings").textContent = formatNumber(activeCount);
-            document.getElementById("completedListings").textContent = formatNumber(completedCount);
-            document.getElementById("buyerTransactions").textContent = formatNumber(buyerCount);
-            document.getElementById("sellerTransactions").textContent = formatNumber(sellerCount);
-            document.getElementById("averageRating").textContent = rating.toFixed(2);
+        function renderStats(summary, insights) {
+            document.getElementById("totalListings").textContent = formatNumber(insights.total_listings || summary.total_listings || 0);
+            document.getElementById("activeTransactions").textContent = formatNumber(insights.active_transactions || 0);
+            document.getElementById("completedTransactions").textContent = formatNumber(insights.completed_transactions || 0);
+            document.getElementById("totalWasteDiverted").textContent = formatNumber(insights.total_waste_diverted || 0, 2);
+            document.getElementById("myActiveListings").textContent = formatNumber(summary.active_listings || 0);
         }
 
-        function renderListings(listings) {
-            const body = document.getElementById("listingsBody");
-            document.getElementById("listingCount").textContent = `${listings.length} records`;
-            const snapshot = listings.slice(0, 6);
-
-            if (!snapshot.length) {
-                body.innerHTML = `<tr><td colspan="5" class="empty-state">No listings created yet.</td></tr>`;
+        function renderActivityFeed(rows) {
+            const container = document.getElementById("activityFeed");
+            if (!rows.length) {
+                container.innerHTML = `<div class="empty-state">No recent activity found.</div>`;
                 return;
             }
 
-            body.innerHTML = snapshot.map((listing) => `
-                <tr>
-                    <td data-label="Product">${materialCell(listing.product_name, listing.category, listing.unit)}</td>
-                    <td data-label="Type">${statusBadge(listing.listing_type)}</td>
-                    <td data-label="Available">${formatNumber(listing.available_qty, 2)} ${escapeHtml(listing.unit)}</td>
-                    <td data-label="Status">${statusBadge(listing.status)}</td>
-                    <td data-label="Created">${formatDate(listing.created_at)}</td>
-                </tr>
-            `).join("");
+            container.innerHTML = rows.map((item) => {
+                const icon = String(item.event_type || "").toUpperCase() === "TRANSACTION" ? "TX" : "LS";
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon">${icon}</div>
+                        <div class="feed-body">
+                            <p>${escapeHtml(item.message || "")}</p>
+                            <span class="activity-time">${timeAgo(item.event_time)}</span>
+                        </div>
+                    </div>
+                `;
+            }).join("");
         }
 
-        function renderTransactions(transactions) {
-            const body = document.getElementById("transactionsBody");
-
-            if (!transactions.length) {
-                body.innerHTML = `<tr><td colspan="7" class="empty-state">No recent transactions.</td></tr>`;
-                return;
+        function timeAgo(dateValue) {
+            if (!dateValue) {
+                return "Unknown time";
             }
-
-            body.innerHTML = transactions.map((txn) => `
-                <tr>
-                    <td data-label="Product">${materialCell(txn.product_name, txn.category, txn.unit)}</td>
-                    <td data-label="Qty">${formatNumber(txn.qty_exchanged, 2)} ${escapeHtml(txn.unit)}</td>
-                    <td data-label="Buyer">${escapeHtml(txn.buyer_name)}</td>
-                    <td data-label="Seller">${escapeHtml(txn.seller_name)}</td>
-                    <td data-label="Status">${statusBadge(txn.status)}</td>
-                    <td data-label="Date">${formatDate(txn.txn_date)}</td>
-                    <td data-label="Rate"><button class="button button-secondary" type="button" data-rate-txn="${txn.txn_id}">Rate</button></td>
-                </tr>
-            `).join("");
-
-            body.querySelectorAll("button[data-rate-txn]").forEach((button) => {
-                button.addEventListener("click", () => openRatingModal(button.dataset.rateTxn));
-            });
+            const eventTime = new Date(dateValue).getTime();
+            if (Number.isNaN(eventTime)) {
+                return formatDate(dateValue);
+            }
+            const diffSeconds = Math.max(0, Math.floor((Date.now() - eventTime) / 1000));
+            if (diffSeconds < 60) {
+                return "Just now";
+            }
+            const diffMinutes = Math.floor(diffSeconds / 60);
+            if (diffMinutes < 60) {
+                return `${diffMinutes} min ago`;
+            }
+            const diffHours = Math.floor(diffMinutes / 60);
+            if (diffHours < 24) {
+                return `${diffHours} hr ago`;
+            }
+            const diffDays = Math.floor(diffHours / 24);
+            return `${diffDays} day ago${diffDays > 1 ? "s" : ""}`;
         }
 
-        function setTableError(tableBodyId, colspan) {
-            const body = document.getElementById(tableBodyId);
-            body.innerHTML = `<tr><td colspan="${colspan}" class="empty-state">Could not load data.</td></tr>`;
-        }
-
-        loadDashboard();
+        loadOverview();
     </script>
 </body>
 </html>

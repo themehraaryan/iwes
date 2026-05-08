@@ -1,6 +1,7 @@
 USE iwes_db;
 
 DROP VIEW IF EXISTS vw_recent_transactions;
+DROP VIEW IF EXISTS vw_activity_feed;
 DROP VIEW IF EXISTS vw_user_activity;
 DROP VIEW IF EXISTS vw_top_waste_types;
 DROP VIEW IF EXISTS vw_active_listings;
@@ -27,6 +28,7 @@ SELECT
     l.available_qty,
     l.price_per_unit,
     l.location,
+    l.city,
     l.status,
     l.created_at
 FROM Listings l
@@ -75,13 +77,13 @@ SELECT
         SELECT COUNT(*)
         FROM Transactions t
         WHERE t.buyer_id = u.user_id
-          AND t.status = 'DONE'
+          AND t.status = 'COMPLETED'
     ) AS transactions_as_buyer,
     (
         SELECT COUNT(*)
         FROM Transactions t
         WHERE t.seller_id = u.user_id
-          AND t.status = 'DONE'
+          AND t.status = 'COMPLETED'
     ) AS transactions_as_seller,
     (
         SELECT COALESCE(ROUND(AVG(r.score), 2), 0)
@@ -118,3 +120,36 @@ INNER JOIN Users buyer ON buyer.user_id = t.buyer_id
 INNER JOIN Users seller ON seller.user_id = t.seller_id
 WHERE t.txn_date >= NOW() - INTERVAL 30 DAY
 ORDER BY t.txn_date DESC;
+
+-- View: vw_activity_feed
+-- WHAT: Returns recent listing and transaction activity for dashboard feed.
+-- WHY: Dashboard needs one unified feed query instead of merging events in Flask.
+-- Combines listing events and transaction events in one ordered stream.
+-- Keeps the frontend simple while preserving DB-first aggregation.
+CREATE VIEW vw_activity_feed AS
+SELECT
+    'TRANSACTION' AS event_type,
+    t.txn_id AS event_id,
+    CONCAT(u_buyer.name, ' purchased ', t.qty_exchanged, ' ', p.unit, ' of ', p.name) AS message,
+    t.txn_date AS event_time,
+    t.buyer_id AS actor_user_id
+FROM Transactions t
+INNER JOIN Listings l ON t.listing_id = l.listing_id
+INNER JOIN Products p ON l.product_id = p.product_id
+INNER JOIN Users u_buyer ON t.buyer_id = u_buyer.user_id
+
+UNION ALL
+
+SELECT
+    'LISTING' AS event_type,
+    l.listing_id AS event_id,
+    CONCAT(u.name, ' listed ', l.available_qty, ' ', p.unit, ' of ', p.name, ' (', l.listing_type, ')') AS message,
+    l.created_at AS event_time,
+    l.user_id AS actor_user_id
+FROM Listings l
+INNER JOIN Products p ON l.product_id = p.product_id
+INNER JOIN Users u ON l.user_id = u.user_id
+WHERE l.status = 'ACTIVE'
+
+ORDER BY event_time DESC
+LIMIT 20;

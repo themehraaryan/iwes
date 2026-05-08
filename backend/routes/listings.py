@@ -8,6 +8,24 @@ from utils import login_required, serialize_row, serialize_rows
 listings_bp = Blueprint("listings", __name__)
 
 
+def _table_has_column(cursor, table_name, column_name):
+    cursor.execute(f"SHOW COLUMNS FROM {table_name} LIKE %s", (column_name,))
+    return cursor.fetchone() is not None
+
+
+def _view_exists(cursor, view_name):
+    cursor.execute(
+        """
+        SELECT 1
+        FROM information_schema.VIEWS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s
+        LIMIT 1
+        """,
+        (view_name,),
+    )
+    return cursor.fetchone() is not None
+
+
 @listings_bp.get("/listings")
 def get_listings():
     category = (request.args.get("category") or "").strip()
@@ -34,24 +52,64 @@ def get_listings():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            """
-            SELECT *
-            FROM vw_active_listings
-            WHERE (%s = '' OR category = %s)
-              AND (%s IS NULL OR listing_type = %s)
-              AND (%s IS NULL OR available_qty >= %s)
-            ORDER BY created_at DESC
-            """,
-            (
-                category,
-                category,
-                listing_type,
-                listing_type,
-                min_qty_value,
-                min_qty_value,
-            ),
-        )
+        if _view_exists(cursor, "vw_active_listings"):
+            cursor.execute(
+                """
+                SELECT *
+                FROM vw_active_listings
+                WHERE (%s = '' OR category = %s)
+                  AND (%s IS NULL OR listing_type = %s)
+                  AND (%s IS NULL OR available_qty >= %s)
+                ORDER BY created_at DESC
+                """,
+                (
+                    category,
+                    category,
+                    listing_type,
+                    listing_type,
+                    min_qty_value,
+                    min_qty_value,
+                ),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    l.listing_id,
+                    l.user_id,
+                    u.name AS user_name,
+                    u.email AS user_email,
+                    u.phone AS user_phone,
+                    l.product_id,
+                    p.name AS product_name,
+                    p.category,
+                    p.unit,
+                    p.possible_uses,
+                    l.listing_type,
+                    l.total_qty,
+                    l.available_qty,
+                    l.price_per_unit,
+                    l.location,
+                    l.status,
+                    l.created_at
+                FROM Listings l
+                INNER JOIN Users u ON u.user_id = l.user_id
+                INNER JOIN Products p ON p.product_id = l.product_id
+                WHERE l.status = 'ACTIVE'
+                  AND (%s = '' OR p.category = %s)
+                  AND (%s IS NULL OR l.listing_type = %s)
+                  AND (%s IS NULL OR l.available_qty >= %s)
+                ORDER BY l.created_at DESC
+                """,
+                (
+                    category,
+                    category,
+                    listing_type,
+                    listing_type,
+                    min_qty_value,
+                    min_qty_value,
+                ),
+            )
         listings = cursor.fetchall()
         return jsonify({"listings": serialize_rows(listings)}), 200
     except mysql.connector.Error as err:
@@ -74,6 +132,7 @@ def create_listing():
     total_qty = data.get("total_qty")
     price_per_unit = data.get("price_per_unit")
     location = (data.get("location") or "").strip() or None
+    city = (data.get("city") or "").strip() or None
 
     if not product_id or not listing_type or total_qty is None:
         return jsonify({"error": "product_id, listing_type, and total_qty are required"}), 400
@@ -99,29 +158,57 @@ def create_listing():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            """
-            INSERT INTO Listings (
-                user_id,
-                product_id,
-                listing_type,
-                total_qty,
-                available_qty,
-                price_per_unit,
-                location
+        has_city = _table_has_column(cursor, "Listings", "city")
+        if has_city:
+            cursor.execute(
+                """
+                INSERT INTO Listings (
+                    user_id,
+                    product_id,
+                    listing_type,
+                    total_qty,
+                    available_qty,
+                    price_per_unit,
+                    location,
+                    city
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    session["user_id"],
+                    product_id,
+                    listing_type,
+                    total_qty,
+                    total_qty,
+                    price_per_unit,
+                    location,
+                    city,
+                ),
             )
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                session["user_id"],
-                product_id,
-                listing_type,
-                total_qty,
-                total_qty,
-                price_per_unit,
-                location,
-            ),
-        )
+        else:
+            cursor.execute(
+                """
+                INSERT INTO Listings (
+                    user_id,
+                    product_id,
+                    listing_type,
+                    total_qty,
+                    available_qty,
+                    price_per_unit,
+                    location
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    session["user_id"],
+                    product_id,
+                    listing_type,
+                    total_qty,
+                    total_qty,
+                    price_per_unit,
+                    location,
+                ),
+            )
         connection.commit()
         listing_id = cursor.lastrowid
 

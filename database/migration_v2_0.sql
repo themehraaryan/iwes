@@ -1,18 +1,93 @@
 USE iwes_db;
 
+-- IWES V2.0 Migration
+-- WHAT: Upgrades V1 schema and DB objects to V2.0 without rebuilding tables.
+-- WHY: Existing local/demo databases should migrate in-place with data preserved.
+-- This script adds city/location-aware fields, lifecycle statuses, notifications,
+-- and refreshes trigger/procedure/view definitions used by dashboard and matching.
+
+ALTER TABLE Users
+    ADD COLUMN IF NOT EXISTS city VARCHAR(80) DEFAULT NULL;
+
+ALTER TABLE Listings
+    ADD COLUMN IF NOT EXISTS city VARCHAR(80) DEFAULT NULL;
+
+CREATE TABLE IF NOT EXISTS Notifications (
+    notif_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('MATCH_FOUND','TXN_REQUESTED','TXN_UPDATED','LISTING_EXPIRED','RATING_RECEIVED') NOT NULL,
+    message VARCHAR(300) NOT NULL,
+    related_id INT DEFAULT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notif_user
+        FOREIGN KEY (user_id) REFERENCES Users(user_id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    INDEX idx_notif_user_unread (user_id, is_read)
+) ENGINE=InnoDB;
+
+-- Temporary enum includes old and new states so data can be transformed safely.
+ALTER TABLE Transactions
+    MODIFY COLUMN status ENUM(
+        'PENDING',
+        'DONE',
+        'REQUESTED',
+        'ACCEPTED',
+        'IN_TRANSIT',
+        'DELIVERED',
+        'COMPLETED',
+        'CANCELLED'
+    ) DEFAULT 'REQUESTED';
+
+UPDATE Transactions
+SET status = 'REQUESTED'
+WHERE status = 'PENDING';
+
+UPDATE Transactions
+SET status = 'COMPLETED'
+WHERE status = 'DONE';
+
+ALTER TABLE Transactions
+    MODIFY COLUMN status ENUM(
+        'REQUESTED',
+        'ACCEPTED',
+        'IN_TRANSIT',
+        'DELIVERED',
+        'COMPLETED',
+        'CANCELLED'
+    ) DEFAULT 'REQUESTED';
+
+DROP TRIGGER IF EXISTS after_txn_insert;
+DELIMITER $$
+CREATE TRIGGER after_txn_insert
+AFTER INSERT ON Transactions
+FOR EACH ROW
+BEGIN
+    UPDATE Listings
+    SET
+        available_qty = available_qty - NEW.qty_exchanged,
+        status = CASE
+            WHEN available_qty - NEW.qty_exchanged <= 0 THEN 'COMPLETED'
+            ELSE status
+        END
+    WHERE listing_id = NEW.listing_id;
+
+    IF NEW.status = 'REQUESTED' THEN
+        INSERT INTO Notifications (user_id, type, message, related_id)
+        VALUES (
+            NEW.seller_id,
+            'TXN_REQUESTED',
+            CONCAT('New transaction requested for listing #', NEW.listing_id),
+            NEW.txn_id
+        );
+    END IF;
+END$$
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS create_transaction;
 DROP PROCEDURE IF EXISTS match_listings;
-DROP PROCEDURE IF EXISTS get_user_summary;
-DROP EVENT IF EXISTS expire_old_listings;
-
 DELIMITER $$
-
--- Procedure: create_transaction
--- WHAT: Creates a transaction for an active BUY or SELL listing.
--- WHY: Flask should only call this procedure; MySQL decides buyer/seller roles.
--- For SELL listings, the acting user buys from the listing owner.
--- For BUY listings, the acting user sells to the listing owner.
--- Triggers then validate quantity, decrement available_qty, and notify seller.
 CREATE PROCEDURE create_transaction(
     IN p_listing_id INT,
     IN p_buyer_id INT,
@@ -88,11 +163,6 @@ BEGIN
         'REQUESTED' AS status;
 END$$
 
--- Procedure: match_listings
--- WHAT: Finds active SELL listings and computes Smart Match Score (0-100).
--- WHY: Matching and ranking should stay inside MySQL for DBMS-first design.
--- Score formula = qty_score (max 50) + city_bonus (30) + freshness_bonus (20).
--- Flask passes product, quantity, and buyer city; DB returns ranked rows.
 CREATE PROCEDURE match_listings(
     IN p_product_id INT,
     IN p_qty_needed DECIMAL(10,2),
@@ -167,68 +237,33 @@ BEGIN
     ) AS ranked
     ORDER BY match_score DESC, ranked.price_per_unit ASC, ranked.created_at DESC;
 END$$
-
--- Procedure: get_user_summary
--- WHAT: Returns one user's listing count, buyer/seller transaction counts,
--- and average rating received.
--- WHY: The dashboard needs multiple aggregates, but Flask should not assemble
--- analytics with several separate SQL queries.
--- This procedure gives the app one simple CALL for user statistics.
-CREATE PROCEDURE get_user_summary(
-    IN p_user_id INT
-)
-BEGIN
-    SELECT
-        u.user_id,
-        u.name,
-        (
-            SELECT COUNT(*)
-            FROM Listings l
-            WHERE l.user_id = u.user_id
-        ) AS total_listings,
-        (
-            SELECT COUNT(*)
-            FROM Listings l
-            WHERE l.user_id = u.user_id
-              AND l.status = 'ACTIVE'
-        ) AS active_listings,
-        (
-            SELECT COUNT(*)
-            FROM Transactions t
-            WHERE t.buyer_id = u.user_id
-              AND t.status = 'COMPLETED'
-        ) AS transactions_as_buyer,
-        (
-            SELECT COUNT(*)
-            FROM Transactions t
-            WHERE t.seller_id = u.user_id
-              AND t.status = 'COMPLETED'
-        ) AS transactions_as_seller,
-        (
-            SELECT COALESCE(ROUND(AVG(r.score), 2), 0)
-            FROM Ratings r
-            WHERE r.ratee_id = u.user_id
-        ) AS average_rating_received
-    FROM Users u
-    WHERE u.user_id = p_user_id
-    LIMIT 1;
-END$$
-
--- Event: expire_old_listings
--- WHAT: Runs once per day and expires active listings older than 90 days.
--- WHY: Stale listings should not remain available forever during demos.
--- MySQL handles the maintenance task automatically through its event scheduler.
--- Completed listings are left unchanged because they already finished normally.
-CREATE EVENT expire_old_listings
-ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_TIMESTAMP
-DO
-BEGIN
-    UPDATE Listings
-    SET status = 'EXPIRED'
-    WHERE status = 'ACTIVE'
-      AND available_qty > 0
-      AND created_at < NOW() - INTERVAL 90 DAY;
-END$$
-
 DELIMITER ;
+
+DROP VIEW IF EXISTS vw_activity_feed;
+CREATE VIEW vw_activity_feed AS
+SELECT
+    'TRANSACTION' AS event_type,
+    t.txn_id AS event_id,
+    CONCAT(u_buyer.name, ' purchased ', t.qty_exchanged, ' ', p.unit, ' of ', p.name) AS message,
+    t.txn_date AS event_time,
+    t.buyer_id AS actor_user_id
+FROM Transactions t
+INNER JOIN Listings l ON t.listing_id = l.listing_id
+INNER JOIN Products p ON l.product_id = p.product_id
+INNER JOIN Users u_buyer ON t.buyer_id = u_buyer.user_id
+
+UNION ALL
+
+SELECT
+    'LISTING' AS event_type,
+    l.listing_id AS event_id,
+    CONCAT(u.name, ' listed ', l.available_qty, ' ', p.unit, ' of ', p.name, ' (', l.listing_type, ')') AS message,
+    l.created_at AS event_time,
+    l.user_id AS actor_user_id
+FROM Listings l
+INNER JOIN Products p ON l.product_id = p.product_id
+INNER JOIN Users u ON l.user_id = u.user_id
+WHERE l.status = 'ACTIVE'
+
+ORDER BY event_time DESC
+LIMIT 20;

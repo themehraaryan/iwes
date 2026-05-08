@@ -8,6 +8,19 @@ from utils import login_required, serialize_row, serialize_rows
 transactions_bp = Blueprint("transactions", __name__)
 
 
+def _view_exists(cursor, view_name):
+    cursor.execute(
+        """
+        SELECT 1
+        FROM information_schema.VIEWS
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = %s
+        LIMIT 1
+        """,
+        (view_name,),
+    )
+    return cursor.fetchone() is not None
+
+
 def _bad_db_request(err):
     if getattr(err, "errno", None) == 1644 or getattr(err, "sqlstate", None) == "45000":
         return jsonify({"error": err.msg}), 400
@@ -75,15 +88,44 @@ def transaction_history():
     try:
         connection = get_db_connection()
         cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            """
-            SELECT *
-            FROM vw_recent_transactions
-            WHERE buyer_id = %s OR seller_id = %s
-            ORDER BY txn_date DESC
-            """,
-            (session["user_id"], session["user_id"]),
-        )
+        if _view_exists(cursor, "vw_recent_transactions"):
+            cursor.execute(
+                """
+                SELECT *
+                FROM vw_recent_transactions
+                WHERE buyer_id = %s OR seller_id = %s
+                ORDER BY txn_date DESC
+                """,
+                (session["user_id"], session["user_id"]),
+            )
+        else:
+            cursor.execute(
+                """
+                SELECT
+                    t.txn_id,
+                    t.listing_id,
+                    t.buyer_id,
+                    buyer.name AS buyer_name,
+                    t.seller_id,
+                    seller.name AS seller_name,
+                    p.product_id,
+                    p.name AS product_name,
+                    p.category,
+                    p.unit,
+                    l.listing_type,
+                    t.qty_exchanged,
+                    t.status,
+                    t.txn_date
+                FROM Transactions t
+                INNER JOIN Listings l ON l.listing_id = t.listing_id
+                INNER JOIN Products p ON p.product_id = l.product_id
+                INNER JOIN Users buyer ON buyer.user_id = t.buyer_id
+                INNER JOIN Users seller ON seller.user_id = t.seller_id
+                WHERE t.buyer_id = %s OR t.seller_id = %s
+                ORDER BY t.txn_date DESC
+                """,
+                (session["user_id"], session["user_id"]),
+            )
         transactions = cursor.fetchall()
         return jsonify({"transactions": serialize_rows(transactions)}), 200
     except mysql.connector.Error as err:

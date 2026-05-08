@@ -10,6 +10,7 @@ from routes.analytics import analytics_bp
 from routes.auth import auth_bp
 from routes.listings import listings_bp
 from routes.match import match_bp
+from routes.notifications import notifications_bp
 from routes.products import products_bp
 from routes.ratings import ratings_bp
 from routes.transactions import transactions_bp
@@ -24,6 +25,7 @@ app.register_blueprint(listings_bp)
 app.register_blueprint(products_bp)
 app.register_blueprint(transactions_bp)
 app.register_blueprint(match_bp)
+app.register_blueprint(notifications_bp)
 app.register_blueprint(analytics_bp)
 app.register_blueprint(ratings_bp)
 
@@ -41,7 +43,7 @@ def add_cors_headers(response):
         response.headers["Access-Control-Allow-Origin"] = origin
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     return response
 
 

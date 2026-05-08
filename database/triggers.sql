@@ -47,7 +47,7 @@ END$$
 -- WHAT: Updates the listing after a transaction is inserted.
 -- WHY: total_qty should never change, but available_qty must reduce automatically.
 -- When the remaining quantity reaches zero, the listing is marked COMPLETED.
--- This makes the database responsible for stock/demand consistency.
+-- This also creates a DB-level notification for the seller on new requests.
 CREATE TRIGGER after_txn_insert
 AFTER INSERT ON Transactions
 FOR EACH ROW
@@ -60,6 +60,16 @@ BEGIN
             ELSE status
         END
     WHERE listing_id = NEW.listing_id;
+
+    IF NEW.status = 'REQUESTED' THEN
+        INSERT INTO Notifications (user_id, type, message, related_id)
+        VALUES (
+            NEW.seller_id,
+            'TXN_REQUESTED',
+            CONCAT('New transaction requested for listing #', NEW.listing_id),
+            NEW.txn_id
+        );
+    END IF;
 END$$
 
 DELIMITER ;
